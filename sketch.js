@@ -118,26 +118,45 @@ function drawHandNet() {
     // 左手
     let leftThumb = pose.keypoints.find(k => k.part === "leftThumb");
     let leftIndex = pose.keypoints.find(k => k.part === "leftIndex");
-    if (leftThumb && leftIndex && leftThumb.score > 0.2 && leftIndex.score > 0.2) {
-      stroke(0, 180, 255, 220);
-      strokeWeight(8);
-      line(leftThumb.position.x, leftThumb.position.y, leftIndex.position.x, leftIndex.position.y);
-      noStroke();
-      fill(0, 180, 255);
-      ellipse(leftThumb.position.x, leftThumb.position.y, 36, 36);
-      ellipse(leftIndex.position.x, leftIndex.position.y, 36, 36);
-    }
     // 右手
     let rightThumb = pose.keypoints.find(k => k.part === "rightThumb");
     let rightIndex = pose.keypoints.find(k => k.part === "rightIndex");
-    if (rightThumb && rightIndex && rightThumb.score > 0.2 && rightIndex.score > 0.2) {
-      stroke(0, 180, 255, 220);
-      strokeWeight(8);
-      line(rightThumb.position.x, rightThumb.position.y, rightIndex.position.x, rightIndex.position.y);
-      noStroke();
-      fill(0, 180, 255);
-      ellipse(rightThumb.position.x, rightThumb.position.y, 36, 36);
-      ellipse(rightIndex.position.x, rightIndex.position.y, 36, 36);
+
+    // 左手線段
+    if (leftThumb && leftIndex) {
+      // 顯示座標
+      fill(255, 0, 0);
+      textSize(16);
+      if (leftThumb.score > 0.2) text("LT", leftThumb.position.x + 10, leftThumb.position.y);
+      if (leftIndex.score > 0.2) text("LI", leftIndex.position.x + 10, leftIndex.position.y);
+
+      if (leftThumb.score > 0.2 && leftIndex.score > 0.2) {
+        stroke(0, 180, 255, 220);
+        strokeWeight(8);
+        line(leftThumb.position.x, leftThumb.position.y, leftIndex.position.x, leftIndex.position.y);
+        noStroke();
+        fill(0, 180, 255);
+        ellipse(leftThumb.position.x, leftThumb.position.y, 36, 36);
+        ellipse(leftIndex.position.x, leftIndex.position.y, 36, 36);
+      }
+    }
+
+    // 右手線段
+    if (rightThumb && rightIndex) {
+      fill(255, 0, 0);
+      textSize(16);
+      if (rightThumb.score > 0.2) text("RT", rightThumb.position.x + 10, rightThumb.position.y);
+      if (rightIndex.score > 0.2) text("RI", rightIndex.position.x + 10, rightIndex.position.y);
+
+      if (rightThumb.score > 0.2 && rightIndex.score > 0.2) {
+        stroke(0, 180, 255, 220);
+        strokeWeight(8);
+        line(rightThumb.position.x, rightThumb.position.y, rightIndex.position.x, rightIndex.position.y);
+        noStroke();
+        fill(0, 180, 255);
+        ellipse(rightThumb.position.x, rightThumb.position.y, 36, 36);
+        ellipse(rightIndex.position.x, rightIndex.position.y, 36, 36);
+      }
     }
   }
 }
