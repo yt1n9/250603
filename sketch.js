@@ -58,7 +58,7 @@ function draw() {
     return;
   }
 
-  // 畫出手指點與大拇指-食指線
+  // 畫出手指點與大拇指-食指線（鏡像）
   drawKeypoints();
 
   // 掉落單字與炸彈
@@ -108,39 +108,49 @@ function draw() {
   }
 }
 
-// 畫出手指點與大拇指-食指線
+// 畫出手指點與大拇指-食指線（鏡像）
 function drawKeypoints() {
   if (predictions.length > 0) {
     let prediction = predictions[0];
     let keypoints = prediction.landmarks;
 
-    // 畫出所有關鍵點
+    // 畫出所有關鍵點（鏡像 X 座標）
     for (let keypoint of keypoints) {
+      let mx = width - keypoint[0];
+      let my = keypoint[1];
       fill(0, 255, 0);
       noStroke();
-      ellipse(keypoint[0], keypoint[1], 10, 10);
+      ellipse(mx, my, 10, 10);
     }
 
     // 只連大拇指(4)與食指(8)
     let thumbTip = keypoints[4];
     let indexTip = keypoints[8];
+    let mx1 = width - thumbTip[0];
+    let my1 = thumbTip[1];
+    let mx2 = width - indexTip[0];
+    let my2 = indexTip[1];
     stroke(0, 180, 255);
     strokeWeight(8);
-    line(thumbTip[0], thumbTip[1], indexTip[0], indexTip[1]);
+    line(mx1, my1, mx2, my2);
   }
 }
 
-// 判斷單字是否被大拇指-食指線段接到
+// 判斷單字是否被大拇指-食指線段接到（鏡像）
 function isItemCaught(x, y) {
   if (predictions.length > 0) {
     let keypoints = predictions[0].landmarks;
     let thumbTip = keypoints[4];
     let indexTip = keypoints[8];
     if (thumbTip && indexTip) {
+      let mx1 = width - thumbTip[0];
+      let my1 = thumbTip[1];
+      let mx2 = width - indexTip[0];
+      let my2 = indexTip[1];
       let d = distToSegment(
         {x, y},
-        {x: thumbTip[0], y: thumbTip[1]},
-        {x: indexTip[0], y: indexTip[1]}
+        {x: mx1, y: my1},
+        {x: mx2, y: my2}
       );
       if (d < 30) return true;
     }
