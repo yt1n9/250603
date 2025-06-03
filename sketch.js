@@ -36,12 +36,12 @@ function modelReady() {
 }
 
 function draw() {
-  // 左右顛倒鏡像
+  // 左右顛倒鏡像，所有內容都放在 push/pop 之間
   push();
   translate(width, 0);
   scale(-1, 1);
+
   image(video, 0, 0, width, height);
-  pop();
 
   // 螢幕最上方顯示「淡江教育科技系」
   fill(0, 102, 204);
@@ -56,6 +56,7 @@ function draw() {
     text("遊戲結束", width / 2, height / 2);
     textSize(40);
     text("分數: " + score, width / 2, height / 2 + 80);
+    pop();
     return;
   }
 
@@ -66,15 +67,14 @@ function draw() {
     let item = fallingItems[i];
     item.y += item.speed;
 
-    // 畫單字或炸彈（顏色統一深藍色）
+    // 單字與炸彈顏色統一
     textAlign(CENTER, CENTER);
+    fill(30, 30, 120);
     if (item.type === "bomb") {
       textSize(60);
-      fill(30, 30, 120);
       text(bombEmoji, item.x, item.y);
     } else {
       textSize(48);
-      fill(30, 30, 120);
       text(item.word, item.x, item.y);
     }
 
@@ -105,37 +105,33 @@ function draw() {
   if (frameCount % 60 === 0 && !gameOver) {
     spawnItem();
   }
+
+  pop();
 }
 
 // 畫出手指網子
 function drawHandNet() {
   if (poses.length > 0) {
     let pose = poses[0].pose;
-    // 取得所有手指座標
-    leftIndex = pose.keypoints.find(k => k.part === "leftIndex");
-    rightIndex = pose.keypoints.find(k => k.part === "rightIndex");
-    leftMiddle = pose.keypoints.find(k => k.part === "leftMiddle");
-    rightMiddle = pose.keypoints.find(k => k.part === "rightMiddle");
-    leftRing = pose.keypoints.find(k => k.part === "leftRing");
-    rightRing = pose.keypoints.find(k => k.part === "rightRing");
-    leftPinky = pose.keypoints.find(k => k.part === "leftPinky");
-    rightPinky = pose.keypoints.find(k => k.part === "rightPinky");
-    leftThumb = pose.keypoints.find(k => k.part === "leftThumb");
-    rightThumb = pose.keypoints.find(k => k.part === "rightThumb");
-
-    // 收集有效手指點
+    // 只取10個手指點
+    let fingerParts = [
+      "leftIndex", "rightIndex", "leftMiddle", "rightMiddle",
+      "leftRing", "rightRing", "leftPinky", "rightPinky",
+      "leftThumb", "rightThumb"
+    ];
     let points = [];
-    [leftIndex, rightIndex, leftMiddle, rightMiddle, leftRing, rightRing, leftPinky, rightPinky, leftThumb, rightThumb].forEach(pt => {
+    fingerParts.forEach(part => {
+      let pt = pose.keypoints.find(k => k.part === part);
       if (pt && pt.score > 0.2) {
         points.push(pt.position);
       }
     });
 
-    // 畫網子
-    stroke(0, 180, 255, 180);
-    strokeWeight(4);
-    fill(0, 180, 255, 60);
+    // 畫網子（多邊形）
     if (points.length > 2) {
+      stroke(0, 180, 255, 220);
+      strokeWeight(8);
+      fill(0, 180, 255, 80);
       beginShape();
       for (let p of points) {
         vertex(p.x, p.y);
@@ -147,7 +143,7 @@ function drawHandNet() {
     noStroke();
     fill(0, 180, 255);
     for (let p of points) {
-      ellipse(p.x, p.y, 30, 30);
+      ellipse(p.x, p.y, 36, 36);
     }
   }
 }
