@@ -11,8 +11,9 @@ let bombEmoji = "💣"; // 若無 bomb 圖片可用 emoji
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  video = createCapture(VIDEO);
-  video.size(windowWidth, windowHeight); // 強制 video 與 canvas 完全一致
+  video = createCapture(VIDEO, () => {
+    video.size(width, height); // 確保 video 與 canvas 完全一致
+  });
   video.hide();
 
   handpose = ml5.handpose(video, modelReady);
@@ -25,7 +26,7 @@ function setup() {
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
-  video.size(windowWidth, windowHeight); // 同步 video 與 canvas
+  video.size(width, height); // 同步 video 與 canvas
 }
 
 function modelReady() {
@@ -34,6 +35,7 @@ function modelReady() {
 
 function draw() {
   // debug: 檢查 video/canvas 寬高
+  // 請打開 console 檢查這兩組數字是否完全一樣
   // console.log("video:", video.width, video.height, "canvas:", width, height);
 
   background(0);
@@ -113,6 +115,9 @@ function draw() {
 
 // 畫出手指點與大拇指-食指線（鏡像）
 function drawKeypoints() {
+  // debug: 印出預測數量
+  // console.log("predictions.length", predictions.length);
+
   if (predictions.length > 0) {
     let keypoints = predictions[0].landmarks;
     let videoW = video.width;
@@ -126,6 +131,8 @@ function drawKeypoints() {
       fill(0, 255, 0);
       noStroke();
       ellipse(mx, my, 10, 10);
+      // debug: 印出點座標
+      // console.log("mx,my", mx, my);
     }
 
     // 只連大拇指(4)與食指(8)
