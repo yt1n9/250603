@@ -11,9 +11,8 @@ let bombEmoji = "💣";
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  video = createCapture(VIDEO, () => {
-    video.size(width, height);
-  });
+  video = createCapture(VIDEO);
+  video.size(windowWidth, windowHeight); // 修正：用 windowWidth, windowHeight
   video.hide();
 
   handpose = ml5.handpose(video, modelReady);
@@ -26,7 +25,7 @@ function setup() {
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
-  video.size(width, height);
+  video.size(windowWidth, windowHeight); // 修正：用 windowWidth, windowHeight
 }
 
 function modelReady() {
@@ -111,6 +110,8 @@ function draw() {
 
 // 只畫食指指尖紅點
 function drawIndexFinger() {
+  // debug
+  // console.log("predictions.length:", predictions.length);
   if (predictions.length > 0) {
     let keypoints = predictions[0].landmarks;
     let videoW = video.width;
@@ -118,6 +119,7 @@ function drawIndexFinger() {
     let indexTip = keypoints[8];
     let ix = width - (indexTip[0] * width / videoW);
     let iy = indexTip[1] * height / videoH;
+    // console.log("indexTip:", ix, iy);
     fill(255, 0, 0);
     noStroke();
     ellipse(ix, iy, 30, 30);
