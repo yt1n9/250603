@@ -113,11 +113,10 @@ function draw() {
 function drawHandNet() {
   if (poses.length > 0) {
     let pose = poses[0].pose;
-    // 只取10個手指點
+    // 只取左右大拇指與食指
     let fingerParts = [
-      "leftIndex", "rightIndex", "leftMiddle", "rightMiddle",
-      "leftRing", "rightRing", "leftPinky", "rightPinky",
-      "leftThumb", "rightThumb"
+      "leftThumb", "leftIndex",
+      "rightThumb", "rightIndex"
     ];
     let points = [];
     fingerParts.forEach(part => {
@@ -128,7 +127,7 @@ function drawHandNet() {
     });
 
     // 畫網子（多邊形）
-    if (points.length > 2) {
+    if (points.length === 4) {
       stroke(0, 180, 255, 220);
       strokeWeight(8);
       fill(0, 180, 255, 80);
@@ -153,16 +152,10 @@ function isItemCaught(x, y) {
   if (poses.length > 0) {
     let pose = poses[0].pose;
     let fingers = [
-      pose.keypoints.find(k => k.part === "leftIndex"),
-      pose.keypoints.find(k => k.part === "rightIndex"),
-      pose.keypoints.find(k => k.part === "leftMiddle"),
-      pose.keypoints.find(k => k.part === "rightMiddle"),
-      pose.keypoints.find(k => k.part === "leftRing"),
-      pose.keypoints.find(k => k.part === "rightRing"),
-      pose.keypoints.find(k => k.part === "leftPinky"),
-      pose.keypoints.find(k => k.part === "rightPinky"),
       pose.keypoints.find(k => k.part === "leftThumb"),
+      pose.keypoints.find(k => k.part === "leftIndex"),
       pose.keypoints.find(k => k.part === "rightThumb"),
+      pose.keypoints.find(k => k.part === "rightIndex")
     ];
     // 只要有一個手指點在單字附近就算接到
     for (let f of fingers) {
@@ -174,7 +167,7 @@ function isItemCaught(x, y) {
     }
     // 額外判斷：如果網子多邊形包住單字
     let points = fingers.filter(f => f && f.score > 0.2).map(f => f.position);
-    if (points.length > 2 && pointInPolygon({x, y}, points)) {
+    if (points.length === 4 && pointInPolygon({x, y}, points)) {
       return true;
     }
   }
