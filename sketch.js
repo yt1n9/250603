@@ -8,7 +8,7 @@ let score = 0;
 let words = ["AI", "VR", "AR", "Coding", "STEAM", "EdTech", "IoT", "BigData"];
 
 function setup() {
-  createCanvas(640, 480);
+  createCanvas(windowWidth, windowHeight); // 改為全螢幕
   video = createCapture(VIDEO);
   video.size(width, height);
   video.hide();
@@ -21,6 +21,11 @@ function setup() {
   nextWord();
 }
 
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight); // 視窗大小改變時自動調整
+  video.size(windowWidth, windowHeight);
+}
+
 function modelReady() {
   console.log("PoseNet ready");
 }
@@ -28,19 +33,25 @@ function modelReady() {
 function draw() {
   image(video, 0, 0, width, height);
 
+  // 螢幕最上方顯示「淡江教育科技系」
+  fill(0, 102, 204);
+  textSize(48);
+  textAlign(CENTER, TOP);
+  text("淡江教育科技系", width / 2, 10);
+
   drawKeypoints();
 
   // 顯示單字
   fill(255, 204, 0);
-  textSize(48);
+  textSize(64);
   textAlign(CENTER, CENTER);
   text(word, wordX, wordY);
 
   // 顯示分數
   fill(0);
-  textSize(24);
+  textSize(32);
   textAlign(LEFT, TOP);
-  text("分數: " + score, 10, 10);
+  text("分數: " + score, 20, 70);
 
   // 判斷雙手是否同時碰到單字
   if (leftWrist && rightWrist) {
@@ -61,13 +72,13 @@ function drawKeypoints() {
 
     fill(0, 255, 0);
     noStroke();
-    ellipse(leftWrist.x, leftWrist.y, 20, 20);
-    ellipse(rightWrist.x, rightWrist.y, 20, 20);
+    ellipse(leftWrist.x, leftWrist.y, 30, 30);
+    ellipse(rightWrist.x, rightWrist.y, 30, 30);
   }
 }
 
 function nextWord() {
   word = random(words);
   wordX = random(100, width - 100);
-  wordY = random(100, height - 100);
+  wordY = random(150, height - 100); // 避開最上方標題
 }
