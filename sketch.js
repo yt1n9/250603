@@ -2,13 +2,17 @@ let video;
 let poseNet;
 let poses = [];
 let leftWrist, rightWrist;
-let word = "";
-let wordX, wordY;
 let score = 0;
-let words = ["AI", "VR", "AR", "Coding", "STEAM", "EdTech", "IoT", "BigData"];
+let gameOver = false;
+
+let eduWords = ["AI", "VR", "AR", "Coding", "STEAM", "EdTech", "IoT", "BigData"];
+let fakeWords = ["Cat", "Dog", "Apple", "Car", "Tree", "Book", "Fish"];
+let fallingItems = [];
+let bombImg; // 可自行加入 bomb 圖片
+let bombEmoji = "💣"; // 若無 bomb 圖片可用 emoji
 
 function setup() {
-  createCanvas(windowWidth, windowHeight); // 改為全螢幕
+  createCanvas(windowWidth, windowHeight);
   video = createCapture(VIDEO);
   video.size(width, height);
   video.hide();
@@ -18,11 +22,11 @@ function setup() {
     poses = results;
   });
 
-  nextWord();
+  spawnItem();
 }
 
 function windowResized() {
-  resizeCanvas(windowWidth, windowHeight); // 視窗大小改變時自動調整
+  resizeCanvas(windowWidth, windowHeight);
   video.size(windowWidth, windowHeight);
 }
 
@@ -39,13 +43,54 @@ function draw() {
   textAlign(CENTER, TOP);
   text("淡江教育科技系", width / 2, 10);
 
+  if (gameOver) {
+    fill(255, 0, 0, 200);
+    textSize(80);
+    textAlign(CENTER, CENTER);
+    text("遊戲結束", width / 2, height / 2);
+    textSize(40);
+    text("分數: " + score, width / 2, height / 2 + 80);
+    return;
+  }
+
   drawKeypoints();
 
-  // 顯示單字
-  fill(255, 204, 0);
-  textSize(64);
-  textAlign(CENTER, CENTER);
-  text(word, wordX, wordY);
+  // 掉落單字與炸彈
+  for (let i = fallingItems.length - 1; i >= 0; i--) {
+    let item = fallingItems[i];
+    item.y += item.speed;
+
+    // 畫單字或炸彈
+    textAlign(CENTER, CENTER);
+    if (item.type === "bomb") {
+      textSize(60);
+      text(bombEmoji, item.x, item.y);
+    } else {
+      textSize(48);
+      fill(item.type === "edu" ? color(255, 204, 0) : color(180));
+      text(item.word, item.x, item.y);
+    }
+
+    // 判斷雙手是否碰到
+    if (leftWrist && rightWrist) {
+      let d1 = dist(leftWrist.x, leftWrist.y, item.x, item.y);
+      let d2 = dist(rightWrist.x, rightWrist.y, item.x, item.y);
+      if (d1 < 60 || d2 < 60) {
+        if (item.type === "bomb") {
+          gameOver = true;
+        } else if (item.type === "edu") {
+          score++;
+        }
+        fallingItems.splice(i, 1);
+        continue;
+      }
+    }
+
+    // 超出畫面移除
+    if (item.y > height + 50) {
+      fallingItems.splice(i, 1);
+    }
+  }
 
   // 顯示分數
   fill(0);
@@ -53,14 +98,9 @@ function draw() {
   textAlign(LEFT, TOP);
   text("分數: " + score, 20, 70);
 
-  // 判斷雙手是否同時碰到單字
-  if (leftWrist && rightWrist) {
-    let d1 = dist(leftWrist.x, leftWrist.y, wordX, wordY);
-    let d2 = dist(rightWrist.x, rightWrist.y, wordX, wordY);
-    if (d1 < 60 && d2 < 60) {
-      score++;
-      nextWord();
-    }
+  // 定時產生新物件
+  if (frameCount % 60 === 0 && !gameOver) {
+    spawnItem();
   }
 }
 
@@ -77,8 +117,25 @@ function drawKeypoints() {
   }
 }
 
-function nextWord() {
-  word = random(words);
-  wordX = random(100, width - 100);
-  wordY = random(150, height - 100); // 避開最上方標題
+function spawnItem() {
+  let r = random();
+  let item = {};
+  item.x = random(100, width - 100);
+  item.y = -50;
+  item.speed = random(4, 8);
+
+  if (r < 0.15) {
+    // 15% 炸彈
+    item.type = "bomb";
+    item.word = "";
+  } else if (r < 0.55) {
+    // 40% 教育科技單字
+    item.type = "edu";
+    item.word = random(eduWords);
+  } else {
+    // 45% 假單字
+    item.type = "fake";
+    item.word = random(fakeWords);
+  }
+  fallingItems.push(item);
 }
