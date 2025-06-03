@@ -2,6 +2,7 @@ let video;
 let poseNet;
 let poses = [];
 let leftWrist, rightWrist;
+let leftIndex, rightIndex;
 let score = 0;
 let gameOver = false;
 
@@ -71,10 +72,10 @@ function draw() {
       text(item.word, item.x, item.y);
     }
 
-    // 判斷雙手是否碰到
-    if (leftWrist && rightWrist) {
-      let d1 = dist(leftWrist.x, leftWrist.y, item.x, item.y);
-      let d2 = dist(rightWrist.x, rightWrist.y, item.x, item.y);
+    // 判斷雙手食指是否碰到
+    if (leftIndex && rightIndex) {
+      let d1 = dist(leftIndex.position.x, leftIndex.position.y, item.x, item.y);
+      let d2 = dist(rightIndex.position.x, rightIndex.position.y, item.x, item.y);
       if (d1 < 60 || d2 < 60) {
         if (item.type === "bomb") {
           gameOver = true;
@@ -109,11 +110,23 @@ function drawKeypoints() {
     let pose = poses[0].pose;
     leftWrist = pose.leftWrist;
     rightWrist = pose.rightWrist;
+    leftIndex = pose.keypoints.find(k => k.part === "leftIndex");
+    rightIndex = pose.keypoints.find(k => k.part === "rightIndex");
 
     fill(0, 255, 0);
     noStroke();
     ellipse(leftWrist.x, leftWrist.y, 30, 30);
     ellipse(rightWrist.x, rightWrist.y, 30, 30);
+
+    // 畫出左右食指
+    if (leftIndex && leftIndex.score > 0.2) {
+      fill(255, 0, 0);
+      ellipse(leftIndex.position.x, leftIndex.position.y, 30, 30);
+    }
+    if (rightIndex && rightIndex.score > 0.2) {
+      fill(255, 0, 0);
+      ellipse(rightIndex.position.x, rightIndex.position.y, 30, 30);
+    }
   }
 }
 
