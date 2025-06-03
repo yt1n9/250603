@@ -119,11 +119,10 @@ function drawKeypoints() {
     let videoH = video.height;
 
     for (let keypoint of keypoints) {
-      // 先將 video 座標轉成 canvas 座標
+      // 先將 video 座標轉成 canvas 座標並鏡像
       let x = keypoint[0] * width / videoW;
       let y = keypoint[1] * height / videoH;
-      // X 軸鏡像
-      let mx = width - x;
+      let mx = width - x; // X 軸鏡像
       let my = y;
       fill(0, 255, 0);
       noStroke();
