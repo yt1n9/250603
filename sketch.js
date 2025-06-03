@@ -117,25 +117,14 @@ function drawKeypoints() {
     let videoW = video.width;
     let videoH = video.height;
 
-    for (let keypoint of keypoints) {
-      let x = keypoint[0] * width / videoW;
-      let y = keypoint[1] * height / videoH;
-      let mx = width - x;
-      let my = y;
-      fill(0, 255, 0);
-      noStroke();
-      ellipse(mx, my, 10, 10);
-    }
-
-    // 強調食指
+    // 只畫食指指尖
     let indexTip = keypoints[8];
     let ix = width - (indexTip[0] * width / videoW);
     let iy = indexTip[1] * height / videoH;
     fill(255, 0, 0);
     noStroke();
-    ellipse(ix, iy, 20, 20);
+    ellipse(ix, iy, 30, 30); // 可調整大小
   } else {
-    // 沒有偵測到手時顯示提示
     fill(255, 0, 0);
     textSize(32);
     textAlign(CENTER, CENTER);
