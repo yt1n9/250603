@@ -33,6 +33,8 @@ function modelReady() {
   console.log("Handpose ready");
 }
 
+
+console.log("video:", video.width, video.height, "canvas:", width, height);
 function draw() {
   background(0);
 
@@ -111,6 +113,7 @@ function draw() {
 
 // 只畫食指指尖紅點
 function drawIndexFinger() {
+  console.log("predictions.length:", predictions.length);
   if (predictions.length > 0) {
     let keypoints = predictions[0].landmarks;
     let videoW = video.width;
@@ -118,6 +121,7 @@ function drawIndexFinger() {
     let indexTip = keypoints[8];
     let ix = width - (indexTip[0] * width / videoW);
     let iy = indexTip[1] * height / videoH;
+    console.log("indexTip:", ix, iy);
     fill(255, 0, 0);
     noStroke();
     ellipse(ix, iy, 30, 30);
