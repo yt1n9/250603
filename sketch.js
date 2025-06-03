@@ -225,3 +225,24 @@ function spawnItem() {
   }
   fallingItems.push(item);
 }
+
+function drawKeypoints() {
+  if (predictions.length > 0) {
+    let prediction = predictions[0];
+    let keypoints = prediction.landmarks;
+
+    // 畫出所有關鍵點
+    for (let keypoint of keypoints) {
+      fill(0, 255, 0);
+      noStroke();
+      ellipse(keypoint[0], keypoint[1], 10, 10);
+    }
+
+    // 只連大拇指(4)與食指(8)
+    let thumbTip = keypoints[4];
+    let indexTip = keypoints[8];
+    stroke(0, 180, 255);
+    strokeWeight(4);
+    line(thumbTip[0], thumbTip[1], indexTip[0], indexTip[1]);
+  }
+}
