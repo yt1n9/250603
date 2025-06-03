@@ -36,15 +36,17 @@ function modelReady() {
 }
 
 function draw() {
-  // 左右顛倒鏡像，所有內容都放在 push/pop 之間
+  background(0);
+
+  // 只將攝影機畫面左右顛倒，其餘內容正常
   push();
   translate(width, 0);
   scale(-1, 1);
-
   image(video, 0, 0, width, height);
+  pop();
 
   // 螢幕最上方顯示「淡江教育科技系」
-  fill(0, 102, 204);
+  fill(255); // 白色字體
   textSize(48);
   textAlign(CENTER, TOP);
   text("淡江教育科技系", width / 2, 10);
@@ -56,7 +58,6 @@ function draw() {
     text("遊戲結束", width / 2, height / 2);
     textSize(40);
     text("分數: " + score, width / 2, height / 2 + 80);
-    pop();
     return;
   }
 
@@ -67,14 +68,15 @@ function draw() {
     let item = fallingItems[i];
     item.y += item.speed;
 
-    // 單字與炸彈顏色統一
+    // 單字與炸彈顏色統一（深藍色），字體白色
     textAlign(CENTER, CENTER);
-    fill(30, 30, 120);
     if (item.type === "bomb") {
       textSize(60);
+      fill(30, 30, 120);
       text(bombEmoji, item.x, item.y);
     } else {
       textSize(48);
+      fill(255); // 白色字體
       text(item.word, item.x, item.y);
     }
 
@@ -96,7 +98,7 @@ function draw() {
   }
 
   // 顯示分數
-  fill(0);
+  fill(255);
   textSize(32);
   textAlign(LEFT, TOP);
   text("分數: " + score, 20, 70);
@@ -105,8 +107,6 @@ function draw() {
   if (frameCount % 60 === 0 && !gameOver) {
     spawnItem();
   }
-
-  pop();
 }
 
 // 畫出手指網子
