@@ -1,9 +1,6 @@
 let video;
-let poseNet;
-let poses = [];
-let leftWrist, rightWrist;
-let leftIndex, rightIndex;
-let rightMiddle, leftMiddle, rightRing, leftRing, rightPinky, leftPinky, rightThumb, leftThumb;
+let handpose;
+let predictions = [];
 let score = 0;
 let gameOver = false;
 
@@ -18,9 +15,9 @@ function setup() {
   video.size(width, height);
   video.hide();
 
-  poseNet = ml5.poseNet(video, modelReady);
-  poseNet.on("pose", function(results) {
-    poses = results;
+  handpose = ml5.handpose(video, modelReady);
+  handpose.on("predict", function(results) {
+    predictions = results;
   });
 
   spawnItem();
@@ -32,13 +29,13 @@ function windowResized() {
 }
 
 function modelReady() {
-  console.log("PoseNet ready");
+  console.log("Handpose ready");
 }
 
 function draw() {
   background(0);
 
-  // 只將攝影機畫面左右顛倒，其餘內容正常
+  // 左右顛倒攝影機畫面
   push();
   translate(width, 0);
   scale(-1, 1);
@@ -61,14 +58,14 @@ function draw() {
     return;
   }
 
-  drawHandNet();
+  // 畫出手指點與大拇指-食指線
+  drawKeypoints();
 
   // 掉落單字與炸彈
   for (let i = fallingItems.length - 1; i >= 0; i--) {
     let item = fallingItems[i];
     item.y += item.speed;
 
-    // 單字與炸彈顏色統一（深藍色），字體白色
     textAlign(CENTER, CENTER);
     if (item.type === "bomb") {
       textSize(60);
@@ -80,7 +77,7 @@ function draw() {
       text(item.word, item.x, item.y);
     }
 
-    // 判斷網子是否接到
+    // 判斷線段是否接到
     if (isItemCaught(item.x, item.y)) {
       if (item.type === "bomb") {
         gameOver = true;
@@ -111,84 +108,41 @@ function draw() {
   }
 }
 
-// 畫出手指網子
-function drawHandNet() {
-  if (poses.length > 0) {
-    let pose = poses[0].pose;
-    // 左手
-    let leftThumb = pose.keypoints.find(k => k.part === "leftThumb");
-    let leftIndex = pose.keypoints.find(k => k.part === "leftIndex");
-    // 右手
-    let rightThumb = pose.keypoints.find(k => k.part === "rightThumb");
-    let rightIndex = pose.keypoints.find(k => k.part === "rightIndex");
+// 畫出手指點與大拇指-食指線
+function drawKeypoints() {
+  if (predictions.length > 0) {
+    let prediction = predictions[0];
+    let keypoints = prediction.landmarks;
 
-    // 左手線段
-    if (leftThumb && leftIndex) {
-      // 顯示座標
-      fill(255, 0, 0);
-      textSize(16);
-      if (leftThumb.score > 0.2) text("LT", leftThumb.position.x + 10, leftThumb.position.y);
-      if (leftIndex.score > 0.2) text("LI", leftIndex.position.x + 10, leftIndex.position.y);
-
-      if (leftThumb.score > 0.2 && leftIndex.score > 0.2) {
-        stroke(0, 180, 255, 220);
-        strokeWeight(8);
-        line(leftThumb.position.x, leftThumb.position.y, leftIndex.position.x, leftIndex.position.y);
-        noStroke();
-        fill(0, 180, 255);
-        ellipse(leftThumb.position.x, leftThumb.position.y, 36, 36);
-        ellipse(leftIndex.position.x, leftIndex.position.y, 36, 36);
-      }
+    // 畫出所有關鍵點
+    for (let keypoint of keypoints) {
+      fill(0, 255, 0);
+      noStroke();
+      ellipse(keypoint[0], keypoint[1], 10, 10);
     }
 
-    // 右手線段
-    if (rightThumb && rightIndex) {
-      fill(255, 0, 0);
-      textSize(16);
-      if (rightThumb.score > 0.2) text("RT", rightThumb.position.x + 10, rightThumb.position.y);
-      if (rightIndex.score > 0.2) text("RI", rightIndex.position.x + 10, rightIndex.position.y);
-
-      if (rightThumb.score > 0.2 && rightIndex.score > 0.2) {
-        stroke(0, 180, 255, 220);
-        strokeWeight(8);
-        line(rightThumb.position.x, rightThumb.position.y, rightIndex.position.x, rightIndex.position.y);
-        noStroke();
-        fill(0, 180, 255);
-        ellipse(rightThumb.position.x, rightThumb.position.y, 36, 36);
-        ellipse(rightIndex.position.x, rightIndex.position.y, 36, 36);
-      }
-    }
+    // 只連大拇指(4)與食指(8)
+    let thumbTip = keypoints[4];
+    let indexTip = keypoints[8];
+    stroke(0, 180, 255);
+    strokeWeight(8);
+    line(thumbTip[0], thumbTip[1], indexTip[0], indexTip[1]);
   }
 }
 
-// 判斷單字是否被線段接到
+// 判斷單字是否被大拇指-食指線段接到
 function isItemCaught(x, y) {
-  if (poses.length > 0) {
-    let pose = poses[0].pose;
-    let leftThumb = pose.keypoints.find(k => k.part === "leftThumb");
-    let leftIndex = pose.keypoints.find(k => k.part === "leftIndex");
-    let rightThumb = pose.keypoints.find(k => k.part === "rightThumb");
-    let rightIndex = pose.keypoints.find(k => k.part === "rightIndex");
-
-    // 判斷點到線段的距離
-    let threshold = 30;
-    // 左手線段
-    if (leftThumb && leftIndex && leftThumb.score > 0.2 && leftIndex.score > 0.2) {
+  if (predictions.length > 0) {
+    let keypoints = predictions[0].landmarks;
+    let thumbTip = keypoints[4];
+    let indexTip = keypoints[8];
+    if (thumbTip && indexTip) {
       let d = distToSegment(
         {x, y},
-        {x: leftThumb.position.x, y: leftThumb.position.y},
-        {x: leftIndex.position.x, y: leftIndex.position.y}
+        {x: thumbTip[0], y: thumbTip[1]},
+        {x: indexTip[0], y: indexTip[1]}
       );
-      if (d < threshold) return true;
-    }
-    // 右手線段
-    if (rightThumb && rightIndex && rightThumb.score > 0.2 && rightIndex.score > 0.2) {
-      let d = distToSegment(
-        {x, y},
-        {x: rightThumb.position.x, y: rightThumb.position.y},
-        {x: rightIndex.position.x, y: rightIndex.position.y}
-      );
-      if (d < threshold) return true;
+      if (d < 30) return true;
     }
   }
   return false;
@@ -203,6 +157,7 @@ function distToSegment(p, v, w) {
   return dist(p.x, p.y, v.x + t * (w.x - v.x), v.y + t * (w.y - v.y));
 }
 
+// 產生新掉落物
 function spawnItem() {
   let r = random();
   let item = {};
@@ -224,25 +179,4 @@ function spawnItem() {
     item.word = random(fakeWords);
   }
   fallingItems.push(item);
-}
-
-function drawKeypoints() {
-  if (predictions.length > 0) {
-    let prediction = predictions[0];
-    let keypoints = prediction.landmarks;
-
-    // 畫出所有關鍵點
-    for (let keypoint of keypoints) {
-      fill(0, 255, 0);
-      noStroke();
-      ellipse(keypoint[0], keypoint[1], 10, 10);
-    }
-
-    // 只連大拇指(4)與食指(8)
-    let thumbTip = keypoints[4];
-    let indexTip = keypoints[8];
-    stroke(0, 180, 255);
-    strokeWeight(4);
-    line(thumbTip[0], thumbTip[1], indexTip[0], indexTip[1]);
-  }
 }
