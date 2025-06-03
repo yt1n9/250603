@@ -1,4 +1,4 @@
-let video;
+   let video;
 let poseNet;
 let poses = [];
 let leftWrist, rightWrist;
@@ -86,6 +86,8 @@ function draw() {
         gameOver = true;
       } else if (item.type === "edu") {
         score++;
+      } else if (item.type === "fake") {
+        score--;
       }
       fallingItems.splice(i, 1);
       continue;
@@ -113,7 +115,7 @@ function draw() {
 function drawHandNet() {
   if (poses.length > 0) {
     let pose = poses[0].pose;
-    // 只取左右大拇指與食指
+    // 只取左右手的大拇指與食指
     let fingerParts = [
       "leftThumb", "leftIndex",
       "rightThumb", "rightIndex"
@@ -126,16 +128,19 @@ function drawHandNet() {
       }
     });
 
-    // 畫網子（多邊形）
-    if (points.length === 4) {
-      stroke(0, 180, 255, 220);
-      strokeWeight(8);
-      fill(0, 180, 255, 80);
-      beginShape();
-      for (let p of points) {
-        vertex(p.x, p.y);
+    // 只畫線段：左手大拇指-食指、右手大拇指-食指
+    stroke(0, 180, 255, 220);
+    strokeWeight(8);
+    noFill();
+    if (points.length >= 2) {
+      // 左手
+      if (points[0] && points[1]) {
+        line(points[0].x, points[0].y, points[1].x, points[1].y);
       }
-      endShape(CLOSE);
+      // 右手
+      if (points[2] && points[3]) {
+        line(points[2].x, points[2].y, points[3].x, points[3].y);
+      }
     }
 
     // 畫出每個手指點
@@ -147,45 +152,46 @@ function drawHandNet() {
   }
 }
 
-// 判斷單字是否被網子接到
+// 判斷單字是否被線段接到
 function isItemCaught(x, y) {
   if (poses.length > 0) {
     let pose = poses[0].pose;
-    let fingers = [
-      pose.keypoints.find(k => k.part === "leftThumb"),
-      pose.keypoints.find(k => k.part === "leftIndex"),
-      pose.keypoints.find(k => k.part === "rightThumb"),
-      pose.keypoints.find(k => k.part === "rightIndex")
-    ];
-    // 只要有一個手指點在單字附近就算接到
-    for (let f of fingers) {
-      if (f && f.score > 0.2) {
-        if (dist(f.position.x, f.position.y, x, y) < 40) {
-          return true;
-        }
-      }
+    let leftThumb = pose.keypoints.find(k => k.part === "leftThumb");
+    let leftIndex = pose.keypoints.find(k => k.part === "leftIndex");
+    let rightThumb = pose.keypoints.find(k => k.part === "rightThumb");
+    let rightIndex = pose.keypoints.find(k => k.part === "rightIndex");
+
+    // 判斷點到線段的距離
+    let threshold = 30;
+    // 左手線段
+    if (leftThumb && leftIndex && leftThumb.score > 0.2 && leftIndex.score > 0.2) {
+      let d = distToSegment(
+        {x, y},
+        {x: leftThumb.position.x, y: leftThumb.position.y},
+        {x: leftIndex.position.x, y: leftIndex.position.y}
+      );
+      if (d < threshold) return true;
     }
-    // 額外判斷：如果網子多邊形包住單字
-    let points = fingers.filter(f => f && f.score > 0.2).map(f => f.position);
-    if (points.length === 4 && pointInPolygon({x, y}, points)) {
-      return true;
+    // 右手線段
+    if (rightThumb && rightIndex && rightThumb.score > 0.2 && rightIndex.score > 0.2) {
+      let d = distToSegment(
+        {x, y},
+        {x: rightThumb.position.x, y: rightThumb.position.y},
+        {x: rightIndex.position.x, y: rightIndex.position.y}
+      );
+      if (d < threshold) return true;
     }
   }
   return false;
 }
 
-// 點是否在多邊形內
-function pointInPolygon(point, vs) {
-  let x = point.x, y = point.y;
-  let inside = false;
-  for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
-    let xi = vs[i].x, yi = vs[i].y;
-    let xj = vs[j].x, yj = vs[j].y;
-    let intersect = ((yi > y) !== (yj > y)) &&
-      (x < (xj - xi) * (y - yi) / (yj - yi + 0.00001) + xi);
-    if (intersect) inside = !inside;
-  }
-  return inside;
+// 計算點到線段的最短距離
+function distToSegment(p, v, w) {
+  let l2 = (v.x - w.x) * (v.x - w.x) + (v.y - w.y) * (v.y - w.y);
+  if (l2 === 0) return dist(p.x, p.y, v.x, v.y);
+  let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+  t = max(0, min(1, t));
+  return dist(p.x, p.y, v.x + t * (w.x - v.x), v.y + t * (w.y - v.y));
 }
 
 function spawnItem() {
