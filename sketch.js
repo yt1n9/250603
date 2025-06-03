@@ -34,10 +34,7 @@ function modelReady() {
 }
 
 function draw() {
-  // debug: 檢查 video/canvas 寬高
-  // 請打開 console 檢查這兩組數字是否完全一樣
-  // console.log("video:", video.width, video.height, "canvas:", width, height);
-
+  // background
   background(0);
 
   // 左右顛倒攝影機畫面
@@ -63,7 +60,7 @@ function draw() {
     return;
   }
 
-  // 畫出手指點與大拇指-食指線（鏡像）
+  // 畫出手指點
   drawKeypoints();
 
   // 掉落單字與炸彈
@@ -82,8 +79,8 @@ function draw() {
       text(item.word, item.x, item.y);
     }
 
-    // 判斷線段是否接到
-    if (isItemCaught(item.x, item.y)) {
+    // 判斷食指是否碰到
+    if (isItemTouched(item.x, item.y)) {
       if (item.type === "bomb") {
         gameOver = true;
       } else if (item.type === "edu") {
@@ -113,11 +110,8 @@ function draw() {
   }
 }
 
-// 畫出手指點與大拇指-食指線（鏡像）
+// 畫出所有手指點
 function drawKeypoints() {
-  // debug: 印出預測數量
-  // console.log("predictions.length", predictions.length);
-
   if (predictions.length > 0) {
     let keypoints = predictions[0].landmarks;
     let videoW = video.width;
@@ -131,20 +125,15 @@ function drawKeypoints() {
       fill(0, 255, 0);
       noStroke();
       ellipse(mx, my, 10, 10);
-      // debug: 印出點座標
-      // console.log("mx,my", mx, my);
     }
 
-    // 只連大拇指(4)與食指(8)
-    let thumbTip = keypoints[4];
+    // 強調食指
     let indexTip = keypoints[8];
-    let tx = width - (thumbTip[0] * width / videoW);
-    let ty = thumbTip[1] * height / videoH;
     let ix = width - (indexTip[0] * width / videoW);
     let iy = indexTip[1] * height / videoH;
-    stroke(0, 180, 255);
-    strokeWeight(8);
-    line(tx, ty, ix, iy);
+    fill(255, 0, 0);
+    noStroke();
+    ellipse(ix, iy, 20, 20);
   } else {
     // 沒有偵測到手時顯示提示
     fill(255, 0, 0);
@@ -154,31 +143,24 @@ function drawKeypoints() {
   }
 }
 
-// 判斷單字是否被大拇指-食指線段接到（鏡像）
-function isItemCaught(x, y) {
+// 判斷單字是否被食指碰到（鏡像）
+function isItemTouched(x, y) {
   if (predictions.length > 0) {
     let keypoints = predictions[0].landmarks;
     let videoW = video.width;
     let videoH = video.height;
-    let thumbTip = keypoints[4];
     let indexTip = keypoints[8];
-    if (thumbTip && indexTip) {
-      let mx1 = width - (thumbTip[0] * width / videoW);
-      let my1 = thumbTip[1] * height / videoH;
-      let mx2 = width - (indexTip[0] * width / videoW);
-      let my2 = indexTip[1] * height / videoH;
-      let d = distToSegment(
-        {x, y},
-        {x: mx1, y: my1},
-        {x: mx2, y: my2}
-      );
-      if (d < 30) return true;
+    if (indexTip) {
+      let ix = width - (indexTip[0] * width / videoW);
+      let iy = indexTip[1] * height / videoH;
+      let d = dist(x, y, ix, iy);
+      if (d < 40) return true; // 40 可依需求調整
     }
   }
   return false;
 }
 
-// 計算點到線段的最短距離
+// 計算點到線段的最短距離（已不再使用，可保留）
 function distToSegment(p, v, w) {
   let l2 = (v.x - w.x) * (v.x - w.x) + (v.y - w.y) * (v.y - w.y);
   if (l2 === 0) return dist(p.x, p.y, v.x, v.y);
