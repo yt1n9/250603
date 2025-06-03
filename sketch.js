@@ -11,8 +11,9 @@ let bombEmoji = "💣"; // 若無 bomb 圖片可用 emoji
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  video = createCapture(VIDEO);
-  video.size(width, height); // 用 width, height，不要 windowWidth, windowHeight
+  video = createCapture(VIDEO, () => {
+    video.size(width, height); // 確保 video 與 canvas 同步
+  });
   video.hide();
 
   handpose = ml5.handpose(video, modelReady);
@@ -25,7 +26,7 @@ function setup() {
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
-  video.size(width, height); // 用 width, height
+  video.size(width, height); // 同步 video 與 canvas
 }
 
 function modelReady() {
@@ -33,7 +34,9 @@ function modelReady() {
 }
 
 function draw() {
-  console.log("video:", video.width, video.height, "canvas:", width, height);
+  // debug: 檢查 video/canvas 寬高
+  // console.log("video:", video.width, video.height, "canvas:", width, height);
+
   background(0);
 
   // 左右顛倒攝影機畫面
@@ -44,7 +47,7 @@ function draw() {
   pop();
 
   // 螢幕最上方顯示「淡江教育科技系」
-  fill(255); // 白色字體
+  fill(255);
   textSize(48);
   textAlign(CENTER, TOP);
   text("淡江教育科技系", width / 2, 10);
@@ -74,7 +77,7 @@ function draw() {
       text(bombEmoji, item.x, item.y);
     } else {
       textSize(48);
-      fill(255); // 白色字體
+      fill(255);
       text(item.word, item.x, item.y);
     }
 
@@ -114,16 +117,12 @@ function drawKeypoints() {
   if (predictions.length > 0) {
     let prediction = predictions[0];
     let keypoints = prediction.landmarks;
-
-    // 取得 video 寬高
     let videoW = video.width;
     let videoH = video.height;
 
     for (let keypoint of keypoints) {
-      // 先將 video 座標轉成 canvas 座標
       let x = keypoint[0] * width / videoW;
       let y = keypoint[1] * height / videoH;
-      // X 軸鏡像
       let mx = width - x;
       let my = y;
       fill(0, 255, 0);
