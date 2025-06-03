@@ -1,4 +1,4 @@
-   let video;
+let video;
 let poseNet;
 let poses = [];
 let leftWrist, rightWrist;
@@ -115,39 +115,29 @@ function draw() {
 function drawHandNet() {
   if (poses.length > 0) {
     let pose = poses[0].pose;
-    // 只取左右手的大拇指與食指
-    let fingerParts = [
-      "leftThumb", "leftIndex",
-      "rightThumb", "rightIndex"
-    ];
-    let points = [];
-    fingerParts.forEach(part => {
-      let pt = pose.keypoints.find(k => k.part === part);
-      if (pt && pt.score > 0.2) {
-        points.push(pt.position);
-      }
-    });
-
-    // 只畫線段：左手大拇指-食指、右手大拇指-食指
-    stroke(0, 180, 255, 220);
-    strokeWeight(8);
-    noFill();
-    if (points.length >= 2) {
-      // 左手
-      if (points[0] && points[1]) {
-        line(points[0].x, points[0].y, points[1].x, points[1].y);
-      }
-      // 右手
-      if (points[2] && points[3]) {
-        line(points[2].x, points[2].y, points[3].x, points[3].y);
-      }
+    // 左手
+    let leftThumb = pose.keypoints.find(k => k.part === "leftThumb");
+    let leftIndex = pose.keypoints.find(k => k.part === "leftIndex");
+    if (leftThumb && leftIndex && leftThumb.score > 0.2 && leftIndex.score > 0.2) {
+      stroke(0, 180, 255, 220);
+      strokeWeight(8);
+      line(leftThumb.position.x, leftThumb.position.y, leftIndex.position.x, leftIndex.position.y);
+      noStroke();
+      fill(0, 180, 255);
+      ellipse(leftThumb.position.x, leftThumb.position.y, 36, 36);
+      ellipse(leftIndex.position.x, leftIndex.position.y, 36, 36);
     }
-
-    // 畫出每個手指點
-    noStroke();
-    fill(0, 180, 255);
-    for (let p of points) {
-      ellipse(p.x, p.y, 36, 36);
+    // 右手
+    let rightThumb = pose.keypoints.find(k => k.part === "rightThumb");
+    let rightIndex = pose.keypoints.find(k => k.part === "rightIndex");
+    if (rightThumb && rightIndex && rightThumb.score > 0.2 && rightIndex.score > 0.2) {
+      stroke(0, 180, 255, 220);
+      strokeWeight(8);
+      line(rightThumb.position.x, rightThumb.position.y, rightIndex.position.x, rightIndex.position.y);
+      noStroke();
+      fill(0, 180, 255);
+      ellipse(rightThumb.position.x, rightThumb.position.y, 36, 36);
+      ellipse(rightIndex.position.x, rightIndex.position.y, 36, 36);
     }
   }
 }
