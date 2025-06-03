@@ -3,13 +3,13 @@ let poseNet;
 let poses = [];
 let leftWrist, rightWrist;
 let leftIndex, rightIndex;
+let rightMiddle, leftMiddle, rightRing, leftRing, rightPinky, leftPinky, rightThumb, leftThumb;
 let score = 0;
 let gameOver = false;
 
 let eduWords = ["AI", "VR", "AR", "Coding", "STEAM", "EdTech", "IoT", "BigData"];
 let fakeWords = ["Cat", "Dog", "Apple", "Car", "Tree", "Book", "Fish"];
 let fallingItems = [];
-let bombImg; // 可自行加入 bomb 圖片
 let bombEmoji = "💣"; // 若無 bomb 圖片可用 emoji
 
 function setup() {
@@ -36,7 +36,12 @@ function modelReady() {
 }
 
 function draw() {
+  // 左右顛倒鏡像
+  push();
+  translate(width, 0);
+  scale(-1, 1);
   image(video, 0, 0, width, height);
+  pop();
 
   // 螢幕最上方顯示「淡江教育科技系」
   fill(0, 102, 204);
@@ -54,37 +59,34 @@ function draw() {
     return;
   }
 
-  drawKeypoints();
+  drawHandNet();
 
   // 掉落單字與炸彈
   for (let i = fallingItems.length - 1; i >= 0; i--) {
     let item = fallingItems[i];
     item.y += item.speed;
 
-    // 畫單字或炸彈
+    // 畫單字或炸彈（顏色統一深藍色）
     textAlign(CENTER, CENTER);
     if (item.type === "bomb") {
       textSize(60);
+      fill(30, 30, 120);
       text(bombEmoji, item.x, item.y);
     } else {
       textSize(48);
-      fill(item.type === "edu" ? color(255, 204, 0) : color(180));
+      fill(30, 30, 120);
       text(item.word, item.x, item.y);
     }
 
-    // 判斷雙手食指是否碰到
-    if (leftIndex && rightIndex) {
-      let d1 = dist(leftIndex.position.x, leftIndex.position.y, item.x, item.y);
-      let d2 = dist(rightIndex.position.x, rightIndex.position.y, item.x, item.y);
-      if (d1 < 60 || d2 < 60) {
-        if (item.type === "bomb") {
-          gameOver = true;
-        } else if (item.type === "edu") {
-          score++;
-        }
-        fallingItems.splice(i, 1);
-        continue;
+    // 判斷網子是否接到
+    if (isItemCaught(item.x, item.y)) {
+      if (item.type === "bomb") {
+        gameOver = true;
+      } else if (item.type === "edu") {
+        score++;
       }
+      fallingItems.splice(i, 1);
+      continue;
     }
 
     // 超出畫面移除
@@ -105,29 +107,96 @@ function draw() {
   }
 }
 
-function drawKeypoints() {
+// 畫出手指網子
+function drawHandNet() {
   if (poses.length > 0) {
     let pose = poses[0].pose;
-    leftWrist = pose.leftWrist;
-    rightWrist = pose.rightWrist;
+    // 取得所有手指座標
     leftIndex = pose.keypoints.find(k => k.part === "leftIndex");
     rightIndex = pose.keypoints.find(k => k.part === "rightIndex");
+    leftMiddle = pose.keypoints.find(k => k.part === "leftMiddle");
+    rightMiddle = pose.keypoints.find(k => k.part === "rightMiddle");
+    leftRing = pose.keypoints.find(k => k.part === "leftRing");
+    rightRing = pose.keypoints.find(k => k.part === "rightRing");
+    leftPinky = pose.keypoints.find(k => k.part === "leftPinky");
+    rightPinky = pose.keypoints.find(k => k.part === "rightPinky");
+    leftThumb = pose.keypoints.find(k => k.part === "leftThumb");
+    rightThumb = pose.keypoints.find(k => k.part === "rightThumb");
 
-    fill(0, 255, 0);
-    noStroke();
-    ellipse(leftWrist.x, leftWrist.y, 30, 30);
-    ellipse(rightWrist.x, rightWrist.y, 30, 30);
+    // 收集有效手指點
+    let points = [];
+    [leftIndex, rightIndex, leftMiddle, rightMiddle, leftRing, rightRing, leftPinky, rightPinky, leftThumb, rightThumb].forEach(pt => {
+      if (pt && pt.score > 0.2) {
+        points.push(pt.position);
+      }
+    });
 
-    // 畫出左右食指
-    if (leftIndex && leftIndex.score > 0.2) {
-      fill(255, 0, 0);
-      ellipse(leftIndex.position.x, leftIndex.position.y, 30, 30);
+    // 畫網子
+    stroke(0, 180, 255, 180);
+    strokeWeight(4);
+    fill(0, 180, 255, 60);
+    if (points.length > 2) {
+      beginShape();
+      for (let p of points) {
+        vertex(p.x, p.y);
+      }
+      endShape(CLOSE);
     }
-    if (rightIndex && rightIndex.score > 0.2) {
-      fill(255, 0, 0);
-      ellipse(rightIndex.position.x, rightIndex.position.y, 30, 30);
+
+    // 畫出每個手指點
+    noStroke();
+    fill(0, 180, 255);
+    for (let p of points) {
+      ellipse(p.x, p.y, 30, 30);
     }
   }
+}
+
+// 判斷單字是否被網子接到
+function isItemCaught(x, y) {
+  if (poses.length > 0) {
+    let pose = poses[0].pose;
+    let fingers = [
+      pose.keypoints.find(k => k.part === "leftIndex"),
+      pose.keypoints.find(k => k.part === "rightIndex"),
+      pose.keypoints.find(k => k.part === "leftMiddle"),
+      pose.keypoints.find(k => k.part === "rightMiddle"),
+      pose.keypoints.find(k => k.part === "leftRing"),
+      pose.keypoints.find(k => k.part === "rightRing"),
+      pose.keypoints.find(k => k.part === "leftPinky"),
+      pose.keypoints.find(k => k.part === "rightPinky"),
+      pose.keypoints.find(k => k.part === "leftThumb"),
+      pose.keypoints.find(k => k.part === "rightThumb"),
+    ];
+    // 只要有一個手指點在單字附近就算接到
+    for (let f of fingers) {
+      if (f && f.score > 0.2) {
+        if (dist(f.position.x, f.position.y, x, y) < 40) {
+          return true;
+        }
+      }
+    }
+    // 額外判斷：如果網子多邊形包住單字
+    let points = fingers.filter(f => f && f.score > 0.2).map(f => f.position);
+    if (points.length > 2 && pointInPolygon({x, y}, points)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// 點是否在多邊形內
+function pointInPolygon(point, vs) {
+  let x = point.x, y = point.y;
+  let inside = false;
+  for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+    let xi = vs[i].x, yi = vs[i].y;
+    let xj = vs[j].x, yj = vs[j].y;
+    let intersect = ((yi > y) !== (yj > y)) &&
+      (x < (xj - xi) * (y - yi) / (yj - yi + 0.00001) + xi);
+    if (intersect) inside = !inside;
+  }
+  return inside;
 }
 
 function spawnItem() {
