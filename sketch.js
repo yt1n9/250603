@@ -34,7 +34,6 @@ function modelReady() {
 
 function draw() {
   // debug: 檢查 video/canvas 寬高
-  // 請打開 console 檢查這兩組數字是否完全一樣
   // console.log("video:", video.width, video.height, "canvas:", width, height);
 
   background(0);
@@ -139,6 +138,12 @@ function drawKeypoints() {
     stroke(0, 180, 255);
     strokeWeight(8);
     line(tx, ty, ix, iy);
+  } else {
+    // 沒有偵測到手時顯示提示
+    fill(255, 0, 0);
+    textSize(32);
+    textAlign(CENTER, CENTER);
+    text("請將手放到鏡頭前", width / 2, height / 2);
   }
 }
 
