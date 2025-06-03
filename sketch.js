@@ -114,16 +114,10 @@ function drawKeypoints() {
     let prediction = predictions[0];
     let keypoints = prediction.landmarks;
 
-    // 取得 video 寬高（確保與 canvas 一致）
-    let videoW = video.width;
-    let videoH = video.height;
-
     for (let keypoint of keypoints) {
-      // 先將 video 座標轉成 canvas 座標並鏡像
-      let x = keypoint[0] * width / videoW;
-      let y = keypoint[1] * height / videoH;
-      let mx = width - x; // X 軸鏡像
-      let my = y;
+      // 只做 X 軸鏡像，不做縮放
+      let mx = width - keypoint[0];
+      let my = keypoint[1];
       fill(0, 255, 0);
       noStroke();
       ellipse(mx, my, 10, 10);
@@ -132,10 +126,10 @@ function drawKeypoints() {
     // 只連大拇指(4)與食指(8)
     let thumbTip = keypoints[4];
     let indexTip = keypoints[8];
-    let tx = width - (thumbTip[0] * width / videoW);
-    let ty = thumbTip[1] * height / videoH;
-    let ix = width - (indexTip[0] * width / videoW);
-    let iy = indexTip[1] * height / videoH;
+    let tx = width - thumbTip[0];
+    let ty = thumbTip[1];
+    let ix = width - indexTip[0];
+    let iy = indexTip[1];
     stroke(0, 180, 255);
     strokeWeight(8);
     line(tx, ty, ix, iy);
@@ -146,15 +140,13 @@ function drawKeypoints() {
 function isItemCaught(x, y) {
   if (predictions.length > 0) {
     let keypoints = predictions[0].landmarks;
-    let videoW = video.width;
-    let videoH = video.height;
     let thumbTip = keypoints[4];
     let indexTip = keypoints[8];
     if (thumbTip && indexTip) {
-      let mx1 = width - (thumbTip[0] * width / videoW);
-      let my1 = thumbTip[1] * height / videoH;
-      let mx2 = width - (indexTip[0] * width / videoW);
-      let my2 = indexTip[1] * height / videoH;
+      let mx1 = width - thumbTip[0];
+      let my1 = thumbTip[1];
+      let mx2 = width - indexTip[0];
+      let my2 = indexTip[1];
       let d = distToSegment(
         {x, y},
         {x: mx1, y: my1},
