@@ -7,12 +7,12 @@ let gameOver = false;
 let eduWords = ["AI", "VR", "AR", "Coding", "STEAM", "EdTech", "IoT", "BigData"];
 let fakeWords = ["Cat", "Dog", "Apple", "Car", "Tree", "Book", "Fish"];
 let fallingItems = [];
-let bombEmoji = "💣"; // 若無 bomb 圖片可用 emoji
+let bombEmoji = "💣";
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   video = createCapture(VIDEO, () => {
-    video.size(width, height); // 確保 video 與 canvas 完全一致
+    video.size(width, height);
   });
   video.hide();
 
@@ -26,7 +26,7 @@ function setup() {
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
-  video.size(width, height); // 同步 video 與 canvas
+  video.size(width, height);
 }
 
 function modelReady() {
@@ -34,7 +34,6 @@ function modelReady() {
 }
 
 function draw() {
-  // background
   background(0);
 
   // 左右顛倒攝影機畫面
@@ -44,7 +43,7 @@ function draw() {
   image(video, 0, 0, width, height);
   pop();
 
-  // 螢幕最上方顯示「淡江教育科技系」
+  // 標題
   fill(255);
   textSize(48);
   textAlign(CENTER, TOP);
@@ -60,8 +59,8 @@ function draw() {
     return;
   }
 
-  // 畫出手指點
-  drawKeypoints();
+  // 畫出食指紅點
+  drawIndexFinger();
 
   // 掉落單字與炸彈
   for (let i = fallingItems.length - 1; i >= 0; i--) {
@@ -80,7 +79,7 @@ function draw() {
     }
 
     // 判斷食指是否碰到
-    if (isItemTouched(item.x, item.y)) {
+    if (isIndexTouching(item.x, item.y)) {
       if (item.type === "bomb") {
         gameOver = true;
       } else if (item.type === "edu") {
@@ -110,20 +109,18 @@ function draw() {
   }
 }
 
-// 畫出所有手指點
-function drawKeypoints() {
+// 只畫食指指尖紅點
+function drawIndexFinger() {
   if (predictions.length > 0) {
     let keypoints = predictions[0].landmarks;
     let videoW = video.width;
     let videoH = video.height;
-
-    // 只畫食指指尖
     let indexTip = keypoints[8];
     let ix = width - (indexTip[0] * width / videoW);
     let iy = indexTip[1] * height / videoH;
     fill(255, 0, 0);
     noStroke();
-    ellipse(ix, iy, 30, 30); // 可調整大小
+    ellipse(ix, iy, 30, 30);
   } else {
     fill(255, 0, 0);
     textSize(32);
@@ -132,8 +129,8 @@ function drawKeypoints() {
   }
 }
 
-// 判斷單字是否被食指碰到（鏡像）
-function isItemTouched(x, y) {
+// 判斷食指是否碰到單字
+function isIndexTouching(x, y) {
   if (predictions.length > 0) {
     let keypoints = predictions[0].landmarks;
     let videoW = video.width;
@@ -149,15 +146,6 @@ function isItemTouched(x, y) {
   return false;
 }
 
-// 計算點到線段的最短距離（已不再使用，可保留）
-function distToSegment(p, v, w) {
-  let l2 = (v.x - w.x) * (v.x - w.x) + (v.y - w.y) * (v.y - w.y);
-  if (l2 === 0) return dist(p.x, p.y, v.x, v.y);
-  let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
-  t = max(0, min(1, t));
-  return dist(p.x, p.y, v.x + t * (w.x - v.x), v.y + t * (w.y - v.y));
-}
-
 // 產生新掉落物
 function spawnItem() {
   let r = random();
@@ -167,15 +155,12 @@ function spawnItem() {
   item.speed = random(4, 8);
 
   if (r < 0.15) {
-    // 15% 炸彈
     item.type = "bomb";
     item.word = "";
   } else if (r < 0.55) {
-    // 40% 教育科技單字
     item.type = "edu";
     item.word = random(eduWords);
   } else {
-    // 45% 假單字
     item.type = "fake";
     item.word = random(fakeWords);
   }
