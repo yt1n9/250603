@@ -12,7 +12,7 @@ let bombEmoji = "💣"; // 若無 bomb 圖片可用 emoji
 function setup() {
   createCanvas(windowWidth, windowHeight);
   video = createCapture(VIDEO);
-  video.size(windowWidth, windowHeight); // 這裡直接用 windowWidth, windowHeight
+  video.size(width, height); // 用 width, height，不要 windowWidth, windowHeight
   video.hide();
 
   handpose = ml5.handpose(video, modelReady);
@@ -25,7 +25,7 @@ function setup() {
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
-  video.size(windowWidth, windowHeight);
+  video.size(width, height); // 用 width, height
 }
 
 function modelReady() {
